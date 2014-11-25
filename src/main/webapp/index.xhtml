@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets">
+
+<h:head>
+    <title>Simple JSF Faceletsdfsds page</title>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/foundation/5.4.7/css/foundation.css"/>
+</h:head>
+
+<h:body>
+    <div class="row">
+        <h1>Insurance</h1>
+    </div>
+    <div class="row">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Licence Plate</th>
+                    <th>Insurance number</th>
+                </tr>
+            </thead>
+            <tbody>
+              <ui:repeat value="#{insuranceOverview.people}" var="p">
+                <tr>
+                    <td>#{p.name}</td>
+                    <!--
+                      EL Lambdas are not compatible with SE Lambdas:
+                      Method not found: class java.util.Optional.map(javax.el.LambdaExpression)
+                    -->
+                    <td><!--#-{p.car.map(c->c.plate).orElse("-")}-->
+                        #{p.carLicensePlate.orElse("no car")}</td>
+                    <td><!--#-{p.car.flatMap(c->c.insurance).map(i->i.number).orElse("uninsured")}-->
+                        #{p.insuranceNumber.orElse("uninsured")}</td>
+                </tr>
+              </ui:repeat>
+            </tbody>
+        </table>
+    </div>
+</h:body>
+
+</html>
