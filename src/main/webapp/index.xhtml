@@ -13,33 +13,97 @@
 
 <h:body>
     <div class="row">
-        <h1>Insurance</h1>
+        <h1>Accessing Optional in EL 3.0</h1>
     </div>
     <div class="row">
         <table>
             <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Licence Plate</th>
-                    <th>Insurance number</th>
-                </tr>
+            <tr>
+                <th>Name</th>
+                <th colspan="3">Licence Plate</th>
+                <th colspan="3">Insurance number</th>
+            </tr>
+            <tr>
+                <th>via</th>
+                <th>plain</th>
+                <th>lambda</th>
+                <th>property</th>
+                <th>plain</th>
+                <th>lambda</th>
+                <th>property</th>
+            </tr>
             </thead>
             <tbody>
-              <ui:repeat value="#{insuranceOverview.people}" var="p">
+            <ui:repeat value="#{insuranceOverview.people}" var="p">
                 <tr>
                     <td>#{p.name}</td>
-                    <!--
-                      EL Lambdas are not compatible with SE Lambdas:
-                      Method not found: class java.util.Optional.map(javax.el.LambdaExpression)
-                    -->
-                    <td><!--#-{p.car.map(c->c.plate).orElse("-")}-->
-                        #{p.carLicensePlate.orElse("no car")}</td>
-                    <td><!--#-{p.car.flatMap(c->c.insurance).map(i->i.number).orElse("uninsured")}-->
-                        #{p.insuranceNumber.orElse("uninsured")}</td>
+                    <td>
+                        #{p.carLicensePlate.orElse("no car")}
+                    </td>
+                    <td>
+                        #{p.car.map(c->c.plate).orElse("no car")}
+                    </td>
+                    <td>
+                        #{p.car.plate.orElse("no car")}
+                    </td>
+                    <td>#{p.insuranceNumber.orElse("uninsured")}</td>
+                    <td>#{p.car.flatMap(c->c.insurance).map(i->i.number).orElse("uninsured")}</td>
+                    <td>#{p.car.insurance.number.orElse("uninsured")}</td>
                 </tr>
-              </ui:repeat>
+            </ui:repeat>
             </tbody>
         </table>
+        <p>
+            This lists multiple ways to access a value of type <code>Optional&lt;T&gt;</code>. Two are supported
+            by additional <a href="https://docs.oracle.com/javaee/7/api/javax/el/ELResolver.html">ELResolver</a>
+            implementation <code>OptionalResolver</code>.
+        </p>
+        <pre>
+class Person {
+    public Optional&lt;Car&gt; getCar() {...}
+}
+
+class Car {
+    public Optional&lt;Insurance&gt; getInsurance() {...}
+}
+
+class Insurance {
+    public String getNumber() {...}
+}
+</pre>
+
+        <h3>Plain</h3>
+        <p>
+            Out of the box, EL 3.0 doesn't support Java 8 SE constructs. The main reason is, that JSR-341 is intended
+            to work with Java SE 7, therefore it cannot depend on any Java 8 APIs. One therefore needs to create extra
+            getters to traverse properties returning Optional.
+            <h5>Example</h5>
+            <pre>
+\#{p.insuranceNumber.orElse("uninsured")}
+
+public Optional&lt;String&gt; getInsuranceNumber() {
+    return getCar().flatMap(Car::getInsurance).map(Insurance::getNumber);
+}
+            </pre>
+        </p>
+
+        <h3>Lambda</h3>
+        <p>
+            <code>OptionalResolver</code> incercepts calls to <code>Optional.map</code> and
+            <code>Optional.flatMap</code> and transforms the provided lambda exception to actual
+            <code>java.util.Function</code>.
+            <h5>Example</h5>
+            <pre>\#{p.car.flatMap(c->c.insurance).map(i->i.number).orElse("uninsured")}</pre>
+        </p>
+
+        <h3>Property</h3>
+        <p>
+            With <code>OptionalResolver</code> the semantic of any property access to Optional
+            (except for <code>present</code>) is the same to using <code>map</code> and <code>flatMap</code>.
+            <h5>Example</h5>
+            <pre>\#{p.car.insurance.number.orElse("uninsured")}</pre>
+        </p>
+
     </div>
 </h:body>
 
